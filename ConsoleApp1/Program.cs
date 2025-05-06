@@ -22,7 +22,8 @@ class Program
 
         botClient.StartReceiving(HandleUpdateAsync, HandleErrorAsync, receiverOptions, cts.Token);
 
-        Console.WriteLine("Бот запущен. Нажмите Enter для выхода.");
+        Console.WriteLine("Бот запущен.");
+        while (true) { }
         Console.ReadLine();
         cts.Cancel();
     }
