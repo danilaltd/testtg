@@ -30,6 +30,7 @@ class Program
     private static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
     {
         if (update.Message is not { Text: { } messageText }) return;
+        Console.WriteLine($"Вы сказали: {messageText}");
 
         await botClient.SendMessage(update.Message.Chat.Id, $"Вы сказали: {messageText}", cancellationToken: cancellationToken);
     }
