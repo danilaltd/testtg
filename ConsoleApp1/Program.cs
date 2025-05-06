@@ -6,8 +6,6 @@ using Telegram.Bot.Types.Enums;
 class Program
 {
     private static string Token;
-    private static TelegramBotClient botClient = new TelegramBotClient(Token);
-
     static async Task Main()
     {
         Token = Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN");
