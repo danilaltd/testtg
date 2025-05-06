@@ -2,8 +2,9 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /app
 
-# Копируем только .csproj, чтобы сначала установить зависимости
-COPY ConsoleApp1.csproj .
+# Копируем .csproj из папки ConsoleApp1
+COPY ConsoleApp1/ConsoleApp1.csproj ConsoleApp1/
+WORKDIR /app/ConsoleApp1
 RUN dotnet restore
 
 # Копируем весь код и компилируем
@@ -13,7 +14,7 @@ RUN dotnet publish -c Release -o out
 # Используем легкий .NET runtime для запуска
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
-COPY --from=build /app/out .
+COPY --from=build /app/ConsoleApp1/out .
 
 # Запускаем бота
 CMD ["dotnet", "ConsoleApp1.dll"]
