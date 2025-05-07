@@ -20,5 +20,6 @@ COPY --from=build /app/out .
 # Открываем порт 8080 для внешнего доступа
 EXPOSE 8080
 
+
 # Запускаем приложение
 CMD ["dotnet", "ConsoleApp1.dll"]
