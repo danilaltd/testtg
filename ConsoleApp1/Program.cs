@@ -2,8 +2,6 @@
 using Telegram.Bot.Types;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types.Enums;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using System.Net.Sockets;
 using System.Net;
 using System.Text;
@@ -11,20 +9,19 @@ class Program
 {
     static async Task Main()
     {
-        var listener = new HttpListener();
-        listener.Prefixes.Add("http://0.0.0.0:8080/");
+        var listener = new TcpListener(IPAddress.Any, 8080);
         listener.Start();
-        Console.WriteLine("HTTP-сервер запущен на порту 8080");
+        Console.WriteLine("TCP-сервер запущен на порту 8080");
 
-        _ = Task.Run(() =>
+        _ = Task.Run(async () =>
         {
             while (true)
             {
-                var context = listener.GetContext();
-                var response = context.Response;
-                var buffer = Encoding.UTF8.GetBytes("Bot is running");
-                response.OutputStream.Write(buffer, 0, buffer.Length);
-                response.Close();
+                var client = await listener.AcceptTcpClientAsync();
+                var stream = client.GetStream();
+                var response = Encoding.UTF8.GetBytes("Bot is running");
+                await stream.WriteAsync(response, 0, response.Length);
+                client.Close();
             }
         });
 
