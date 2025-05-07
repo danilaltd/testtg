@@ -1,17 +1,20 @@
-﻿using Telegram.Bot;
-using Telegram.Bot.Types;
-using Telegram.Bot.Polling;
-using Telegram.Bot.Types.Enums;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Hosting;
-
+using Telegram.Bot;
+using Telegram.Bot.Polling;
+using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
 class Program
 {
-    static async Task Main()
+    static async Task Main(string[] args)
     {
-        // Инициализация Telegram-бота
+        var builder = WebApplication.CreateBuilder(args);
+        builder.WebHost.UseUrls("http://0.0.0.0:8080"); // Указываем порт
+
+        var app = builder.Build();
+        app.MapGet("/", () => "Bot is running"); // Добавляем обработку HTTP-запросов
+
+        // Запуск Telegram-бота
         string Token = Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN") ?? throw new ArgumentException("Bot token is missing or invalid.");
         var botClient = new TelegramBotClient(Token);
         using CancellationTokenSource cts = new();
@@ -23,20 +26,8 @@ class Program
         botClient.StartReceiving(HandleUpdateAsync, HandleErrorAsync, receiverOptions, cts.Token);
         Console.WriteLine("Бот запущен.");
 
-        // Запуск HTTP-сервера
-        var host = new WebHostBuilder()
-            .UseKestrel()
-            .Configure(app =>
-            {
-                app.Run(async context =>
-                {
-                    await context.Response.WriteAsync("Bot is running");
-                });
-            })
-            .UseUrls($"http://*:{Environment.GetEnvironmentVariable("PORT") ?? "8080"}")
-            .Build();
-
-        await host.RunAsync();
+        await app.RunAsync();
+        cts.Cancel();
     }
 
     private static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
