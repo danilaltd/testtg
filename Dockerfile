@@ -4,22 +4,23 @@ WORKDIR /app
 
 # Копируем .csproj и восстанавливаем зависимости
 COPY ConsoleApp1/ConsoleApp1.csproj ConsoleApp1/
-RUN dotnet restore ConsoleApp1/ConsoleApp1.csproj
+WORKDIR /app/ConsoleApp1
+RUN dotnet restore ConsoleApp1.csproj
 
-# Копируем только папку проекта
-COPY ConsoleApp1/ ConsoleApp1/
+# Копируем весь проект
+COPY ConsoleApp1/ .
 
-# Компилируем конкретный проект
-RUN dotnet publish ConsoleApp1/ConsoleApp1.csproj -c Release -o out
+# Компилируем проект
+RUN dotnet publish ConsoleApp1.csproj -c Release -o /app/out
 
 # Используем легкий .NET runtime для запуска
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
 COPY --from=build /app/out .
 
-# Открываем порт 8080 для внешнего доступа
+# Render.com ожидает, что приложение слушает порт, указанный в переменной окружения PORT
+# EXPOSE не обязателен, так как Render.com использует PORT, но оставим для документации
 EXPOSE 8080
-
 
 # Запускаем приложение
 CMD ["dotnet", "ConsoleApp1.dll"]

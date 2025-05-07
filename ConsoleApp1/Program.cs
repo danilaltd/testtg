@@ -2,30 +2,16 @@
 using Telegram.Bot.Types;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types.Enums;
-using System.Net.Sockets;
-using System.Net;
-using System.Text;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Hosting;
+
 class Program
 {
     static async Task Main()
     {
-        var listener = new TcpListener(IPAddress.Any, 8080);
-        listener.Start();
-        Console.WriteLine("TCP-сервер запущен на порту 8080");
-
-        _ = Task.Run(async () =>
-        {
-            while (true)
-            {
-                var client = await listener.AcceptTcpClientAsync();
-                var stream = client.GetStream();
-                var response = Encoding.UTF8.GetBytes("Bot is running");
-                await stream.WriteAsync(response, 0, response.Length);
-                client.Close();
-            }
-        });
-
-        // Запуск Telegram-бота
+        // Инициализация Telegram-бота
         string Token = Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN") ?? throw new ArgumentException("Bot token is missing or invalid.");
         var botClient = new TelegramBotClient(Token);
         using CancellationTokenSource cts = new();
@@ -37,8 +23,20 @@ class Program
         botClient.StartReceiving(HandleUpdateAsync, HandleErrorAsync, receiverOptions, cts.Token);
         Console.WriteLine("Бот запущен.");
 
-        await Task.Delay(-1);
-        cts.Cancel();
+        // Запуск HTTP-сервера
+        var host = new WebHostBuilder()
+            .UseKestrel()
+            .Configure(app =>
+            {
+                app.Run(async context =>
+                {
+                    await context.Response.WriteAsync("Bot is running");
+                });
+            })
+            .UseUrls($"http://*:{Environment.GetEnvironmentVariable("PORT") ?? "8080"}")
+            .Build();
+
+        await host.RunAsync();
     }
 
     private static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
