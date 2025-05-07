@@ -2,29 +2,44 @@
 using Telegram.Bot.Types;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types.Enums;
-
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using System.Net.Sockets;
+using System.Net;
+using System.Text;
 class Program
 {
-    private static string Token;
     static async Task Main()
     {
-        Token = Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN");
-        if (string.IsNullOrEmpty(Token))
+        var listener = new TcpListener(IPAddress.Any, 8080);
+        listener.Start();
+        Console.WriteLine("TCP-сервер запущен на порту 8080");
+
+        _ = Task.Run(() =>
         {
-            throw new ArgumentException("Bot token is missing or invalid.");
-        }
+            while (true)
+            {
+                var client = listener.AcceptTcpClient();
+                var stream = client.GetStream();
+                var response = Encoding.UTF8.GetBytes("Bot is running");
+                stream.Write(response, 0, response.Length);
+                client.Close();
+            }
+        });
+
+        // Запуск Telegram-бота
+        string Token = Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN") ?? throw new ArgumentException("Bot token is missing or invalid.");
         var botClient = new TelegramBotClient(Token);
         using CancellationTokenSource cts = new();
         ReceiverOptions receiverOptions = new()
         {
-            AllowedUpdates = Array.Empty<UpdateType>() // Получаем все обновления
+            AllowedUpdates = Array.Empty<UpdateType>()
         };
 
         botClient.StartReceiving(HandleUpdateAsync, HandleErrorAsync, receiverOptions, cts.Token);
-
         Console.WriteLine("Бот запущен.");
-        while (true) { }
-        Console.ReadLine();
+
+        await Task.Delay(-1);
         cts.Cancel();
     }
 
