@@ -11,19 +11,20 @@ class Program
 {
     static async Task Main()
     {
-        var listener = new TcpListener(IPAddress.Any, 8080);
+        var listener = new HttpListener();
+        listener.Prefixes.Add("http://0.0.0.0:8080/");
         listener.Start();
-        Console.WriteLine("TCP-сервер запущен на порту 8080");
+        Console.WriteLine("HTTP-сервер запущен на порту 8080");
 
         _ = Task.Run(() =>
         {
             while (true)
             {
-                var client = listener.AcceptTcpClient();
-                var stream = client.GetStream();
-                var response = Encoding.UTF8.GetBytes("Bot is running");
-                stream.Write(response, 0, response.Length);
-                client.Close();
+                var context = listener.GetContext();
+                var response = context.Response;
+                var buffer = Encoding.UTF8.GetBytes("Bot is running");
+                response.OutputStream.Write(buffer, 0, buffer.Length);
+                response.Close();
             }
         });
 
