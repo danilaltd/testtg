@@ -16,5 +16,8 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
 COPY --from=build /app/ConsoleApp1/out .
 
+# Открываем порт 8080 для внешнего доступа
+EXPOSE 8080
+
 # Запускаем бота
 CMD ["dotnet", "ConsoleApp1.dll"]
